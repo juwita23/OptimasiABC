@@ -415,11 +415,11 @@ def run_optimization_process(start_date, end_date, tickers, jumlah_investasi, rf
         st.plotly_chart(fig_corr, use_container_width=True)
 
     st.markdown("---")
-    st.subheader("3. Tahap Optimasi: Pencarian K Optimum (λ = 0.72)")
+    st.subheader("3. Tahap Optimasi: Pencarian K Optimum (λ = 0.90)")
     
     cov_matrix = filtered_returns.cov()
     PARAM_FOOD_SOURCES = 30; PARAM_MAX_ITER = 200; PARAM_LIMIT = 50
-    lambda_fixed = 0.72; k_search_results = []
+    lambda_fixed = 0.90; k_search_results = []
     
     # --- REVISI 3: Logika rentang K dinamis ---
     if num_assets < 5:
@@ -551,3 +551,4 @@ elif menu == "Panduan Dashboard":
 elif menu == "Optimasi Portofolio":
 
     page_optimasi()
+
