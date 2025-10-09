@@ -266,7 +266,7 @@ def page_optimasi():
     st.markdown("---")
 
     # --- SIDEBAR UNTUK INPUT ---
-    st.sidebar.header("⚙️ Atur Parameter Anda")
+    st.sidebar.header("Atur Parameter Anda")
     start_date = st.sidebar.date_input("Tanggal Mulai", datetime(2025, 3, 3))
     end_date = st.sidebar.date_input("Tanggal Selesai", datetime(2025, 8, 29))
     
@@ -551,5 +551,6 @@ elif menu == "Panduan Dashboard":
 elif menu == "Optimasi Portofolio":
 
     page_optimasi()
+
 
 
