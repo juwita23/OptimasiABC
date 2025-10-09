@@ -267,8 +267,8 @@ def page_optimasi():
 
     # --- SIDEBAR UNTUK INPUT ---
     st.sidebar.header("Atur Parameter Anda")
-    start_date = st.sidebar.date_input("Tanggal Mulai", datetime(2025, 3, 3))
-    end_date = st.sidebar.date_input("Tanggal Selesai", datetime(2025, 8, 29))
+    start_date = st.sidebar.date_input("Tanggal Mulai", datetime(2025, 3, 1))
+    end_date = st.sidebar.date_input("Tanggal Selesai", datetime(2025, 8, 30))
     
     # --- REVISI 2: Menghapus "(Minimal 5)" dari label ---
     selected_tickers = st.sidebar.multiselect(
@@ -551,6 +551,7 @@ elif menu == "Panduan Dashboard":
 elif menu == "Optimasi Portofolio":
 
     page_optimasi()
+
 
 
 
