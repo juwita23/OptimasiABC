@@ -20,7 +20,7 @@ USER_TICKERS = [
     "ANTM.JK", "INCO.JK", "ASII.JK", "INDF.JK", "AUTO.JK", "INTP.JK",
     "AVIA.JK", "JSMR.JK", "BBCA.JK", "KLBF.JK", "BBNI.JK", "MTEL.JK",
     "BBRI.JK", "SIDO.JK", "BBTN.JK", "SMGR.JK", "BMRI.JK", "SMSM.JK",
-    "DSNG.JK", "SSMS.JK", "EMTK.JK", "UNTR.JK", "ICBP.JK", "UNVR.JK"
+    "DSNG.JK", "SSMS.JK", "EMTK.JK", "UNTR.JK", "ICBP.JK", "UNVR.JK", "PGEO.JK"
 ]
 
 # ==============================================================================
@@ -267,8 +267,8 @@ def page_optimasi():
 
     # --- SIDEBAR UNTUK INPUT ---
     st.sidebar.header("⚙️ Atur Parameter Anda")
-    start_date = st.sidebar.date_input("Tanggal Mulai", datetime(2022, 1, 3))
-    end_date = st.sidebar.date_input("Tanggal Selesai", datetime(2025, 6, 30))
+    start_date = st.sidebar.date_input("Tanggal Mulai", datetime(2025, 3, 3))
+    end_date = st.sidebar.date_input("Tanggal Selesai", datetime(2025, 8, 29))
     
     # --- REVISI 2: Menghapus "(Minimal 5)" dari label ---
     selected_tickers = st.sidebar.multiselect(
@@ -549,4 +549,5 @@ if menu == "Halaman Utama":
 elif menu == "Panduan Dashboard":
     page_panduan()
 elif menu == "Optimasi Portofolio":
+
     page_optimasi()
