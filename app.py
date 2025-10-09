@@ -418,7 +418,7 @@ def run_optimization_process(start_date, end_date, tickers, jumlah_investasi, rf
     st.subheader("3. Tahap Optimasi: Pencarian K Optimum (λ = 0.90)")
     
     cov_matrix = filtered_returns.cov()
-    PARAM_FOOD_SOURCES = 30; PARAM_MAX_ITER = 200; PARAM_LIMIT = 50
+    PARAM_FOOD_SOURCES = 30; PARAM_MAX_ITER = 1000; PARAM_LIMIT = 200
     lambda_fixed = 0.90; k_search_results = []
     
     # --- REVISI 3: Logika rentang K dinamis ---
@@ -444,8 +444,8 @@ def run_optimization_process(start_date, end_date, tickers, jumlah_investasi, rf
     best_k_index = df_k_search['Sharpe Ratio'].idxmax(); best_k_result = df_k_search.loc[best_k_index]
     K_optimum = int(best_k_result['K'])
     
-    st.dataframe(df_k_search.style.highlight_max(subset=['Sharpe Ratio'], color='lightgreen').format({'Return': '{:.4%}', 'Risiko': '{:.4%}', 'Sharpe Ratio': '{:.4f}'}))
-    st.success(f"✅ **K Optimum ditemukan: {K_optimum}** dengan Sharpe Ratio tertinggi sebesar **{best_k_result['Sharpe Ratio']:.4f}**.")
+    st.dataframe(df_k_search.style.highlight_max(subset=['Sharpe Ratio'], color='lightgreen').format({'Return': '{:.4%}', 'Risiko': '{:.4%}', 'Sharpe Ratio': '{:.5f}'}))
+    st.success(f"✅ **K Optimum ditemukan: {K_optimum}** dengan Sharpe Ratio tertinggi sebesar **{best_k_result['Sharpe Ratio']:.5f}**.")
     
     st.markdown("---")
     st.subheader(f"4. Tahap Optimasi: Membuat Efficient Frontier (K={K_optimum})")
@@ -470,8 +470,8 @@ def run_optimization_process(start_date, end_date, tickers, jumlah_investasi, rf
     excel_sheets['Data Frontier'] = df_frontier_excel
     optimal_portfolio = df_frontier.loc[df_frontier['sharpe'].idxmax()]
 
-    fig_frontier = px.scatter(df_frontier, x='risk', y='return', color='sharpe', color_continuous_scale='Viridis', labels={'risk': 'Risiko Harian (Std Dev)', 'return': 'Return Harian', 'sharpe': 'Sharpe Ratio'}, hover_data={'risk': ':.4%', 'return': ':.4%', 'sharpe': ':.4f', 'lambda': ':.2f'})
-    fig_frontier.add_trace(go.Scatter(x=[optimal_portfolio['risk']], y=[optimal_portfolio['return']], mode='markers', marker=dict(color='red', size=18, symbol='star', line=dict(width=1, color='black')), name=f'Optimal (λ: {optimal_portfolio["lambda"]:.2f}, Sharpe: {optimal_portfolio["sharpe"]:.4f})'))
+    fig_frontier = px.scatter(df_frontier, x='risk', y='return', color='sharpe', color_continuous_scale='Viridis', labels={'risk': 'Risiko Harian (Std Dev)', 'return': 'Return Harian', 'sharpe': 'Sharpe Ratio'}, hover_data={'risk': ':.4%', 'return': ':.4%', 'sharpe': ':.5f', 'lambda': ':.2f'})
+    fig_frontier.add_trace(go.Scatter(x=[optimal_portfolio['risk']], y=[optimal_portfolio['return']], mode='markers', marker=dict(color='red', size=18, symbol='star', line=dict(width=1, color='black')), name=f'Optimal (λ: {optimal_portfolio["lambda"]:.2f}, Sharpe: {optimal_portfolio["sharpe"]:.5f})'))
     fig_frontier.update_layout(height=600, template='plotly_white', title={'text': f'Efficient Frontier Interaktif (K = {K_optimum})', 'x': 0.5}, coloraxis_colorbar=dict(title='Sharpe Ratio'))
     st.plotly_chart(fig_frontier, use_container_width=True)
 
@@ -551,4 +551,5 @@ elif menu == "Panduan Dashboard":
 elif menu == "Optimasi Portofolio":
 
     page_optimasi()
+
 
