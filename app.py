@@ -7,7 +7,7 @@ import plotly.graph_objects as go
 from datetime import datetime
 from io import BytesIO
 
-# = an=============================================================================
+# ==============================================================================
 # --- 1. PENGATURAN HALAMAN & KONFIGURASI AWAL ---
 # ==============================================================================
 st.set_page_config(
@@ -357,15 +357,26 @@ def run_optimization_process(start_date, end_date, tickers, jumlah_investasi, rf
 
         results_df['Color'] = results_df['Keterangan'].apply(lambda x: '#4CAF50' if x == 'Lolos' else '#F44336')
         fig_elim = px.bar(results_df, x='Emiten', y='Expected Return Harian',
-                              color='Keterangan',
-                              color_discrete_map={'Lolos': '#4CAF50', 'Tereliminasi': '#F44336'},
-                              title='Hasil Eliminasi Emiten vs Risk-Free Rate',
-                              labels={'Expected Return Harian': 'Return Harian'},
-                              hover_data={'Emiten': True, 'Expected Return Harian': ':.4%', 'Risiko Harian': ':.4%', 'Keterangan': True})
+                             color='Keterangan',
+                             color_discrete_map={'Lolos': '#4CAF50', 'Tereliminasi': '#F44336'},
+                             title='Hasil Eliminasi Emiten vs Risk-Free Rate', 
+                             labels={'Expected Return Harian': 'Return Harian'},
+                             hover_data={'Emiten': True, 'Expected Return Harian': ':.4%', 'Risiko Harian': ':.4%', 'Keterangan': True})
+        
         fig_elim.add_hline(y=rf_daily, line_dash="dash", line_color="dodgerblue",
-                              annotation_text=f'RFR Harian ({rf_daily:.4%})', annotation_position="bottom right")
-        fig_elim.update_layout(height=500, xaxis_tickangle=-90, yaxis_title='Expected Return Harian', title_x=0.5)
-        st.plotly_chart(fig_elim, use_container_width=True)
+                             annotation_text=f'RFR Harian ({rf_daily:.4%})', annotation_position="bottom right")
+
+
+fig_elim.update_layout(
+    height=500, 
+    xaxis_tickangle=-90, 
+    yaxis_title='Expected Return Harian', 
+    title_x=0.5,
+    xaxis_categoryorder='total descending'  # <--- TAMBAHKAN BARIS INI
+)
+
+
+st.plotly_chart(fig_elim, use_container_width=True)
     
     num_assets = len(filtered_stocks_tickers)
     if num_assets < 2:
@@ -551,6 +562,7 @@ elif menu == "Panduan Dashboard":
 elif menu == "Optimasi Portofolio":
 
     page_optimasi()
+
 
 
 
