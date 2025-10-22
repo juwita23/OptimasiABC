@@ -355,6 +355,9 @@ def run_optimization_process(start_date, end_date, tickers, jumlah_investasi, rf
             lambda row: ['background-color: #d4edda' if row.Keterangan == 'Lolos' else 'background-color: #f8d7da'] * len(row), axis=1
         ).format({'Expected Return Harian': '{:.4%}', 'Risiko Harian': '{:.4%}'}))
 
+# ... (Asumsi kode di atasnya sudah benar)
+
+        # PASTIKAN SEMUA BLOK INI LURUS / RATA
         results_df['Color'] = results_df['Keterangan'].apply(lambda x: '#4CAF50' if x == 'Lolos' else '#F44336')
         fig_elim = px.bar(results_df, x='Emiten', y='Expected Return Harian',
                              color='Keterangan',
@@ -366,22 +369,23 @@ def run_optimization_process(start_date, end_date, tickers, jumlah_investasi, rf
         fig_elim.add_hline(y=rf_daily, line_dash="dash", line_color="dodgerblue",
                              annotation_text=f'RFR Harian ({rf_daily:.4%})', annotation_position="bottom right")
 
-
         fig_elim.update_layout(
             height=500, 
             xaxis_tickangle=-90, 
             yaxis_title='Expected Return Harian', 
             title_x=0.5,
-            xaxis_categoryorder='total descending'  # <--- TAMBAHKAN BARIS INI
+            xaxis_categoryorder='total descending'
         )
 
-
-st.plotly_chart(fig_elim, use_container_width=True)
-    
-    num_assets = len(filtered_stocks_tickers)
-    if num_assets < 2:
-        st.error(f"⚠️ Jumlah saham yang lolos seleksi ({num_assets}) kurang dari 2. Proses optimasi tidak dapat dilanjutkan.")
-        return
+        # <-- BARIS INI HARUS PUNYA INDENTASI YANG SAMA
+        st.plotly_chart(fig_elim, use_container_width=True)
+        
+        # <-- BARIS INI JUGA HARUS LURUS (INDENTASI SAMA)
+        num_assets = len(filtered_stocks_tickers)
+        if num_assets < 2:
+            # Indentasi di dalam 'if' harus lebih menjorok
+            st.error(f"⚠️ Jumlah saham yang lolos seleksi ({num_assets}) kurang dari 2. Proses optimasi tidak dapat dilanjutkan.")
+            return
 
     st.subheader("2. Analisis Awal Saham yang Lolos")
     with st.spinner("Menghitung statistika dan volatilitas... 📊"):
@@ -562,6 +566,7 @@ elif menu == "Panduan Dashboard":
 elif menu == "Optimasi Portofolio":
 
     page_optimasi()
+
 
 
 
