@@ -355,9 +355,6 @@ def run_optimization_process(start_date, end_date, tickers, jumlah_investasi, rf
             lambda row: ['background-color: #d4edda' if row.Keterangan == 'Lolos' else 'background-color: #f8d7da'] * len(row), axis=1
         ).format({'Expected Return Harian': '{:.4%}', 'Risiko Harian': '{:.4%}'}))
 
-# ... (Asumsi kode di atasnya sudah benar)
-
-        # PASTIKAN SEMUA BLOK INI LURUS / RATA
         results_df['Color'] = results_df['Keterangan'].apply(lambda x: '#4CAF50' if x == 'Lolos' else '#F44336')
         fig_elim = px.bar(results_df, x='Emiten', y='Expected Return Harian',
                              color='Keterangan',
@@ -377,10 +374,7 @@ def run_optimization_process(start_date, end_date, tickers, jumlah_investasi, rf
             xaxis_categoryorder='total descending'
         )
 
-        # <-- BARIS INI HARUS PUNYA INDENTASI YANG SAMA
         st.plotly_chart(fig_elim, use_container_width=True)
-        
-        # <-- BARIS INI JUGA HARUS LURUS (INDENTASI SAMA)
         num_assets = len(filtered_stocks_tickers)
         if num_assets < 2:
             # Indentasi di dalam 'if' harus lebih menjorok
@@ -566,6 +560,7 @@ elif menu == "Panduan Dashboard":
 elif menu == "Optimasi Portofolio":
 
     page_optimasi()
+
 
 
 
