@@ -367,13 +367,13 @@ def run_optimization_process(start_date, end_date, tickers, jumlah_investasi, rf
                              annotation_text=f'RFR Harian ({rf_daily:.4%})', annotation_position="bottom right")
 
 
-fig_elim.update_layout(
-    height=500, 
-    xaxis_tickangle=-90, 
-    yaxis_title='Expected Return Harian', 
-    title_x=0.5,
-    xaxis_categoryorder='total descending'  # <--- TAMBAHKAN BARIS INI
-)
+        fig_elim.update_layout(
+            height=500, 
+            xaxis_tickangle=-90, 
+            yaxis_title='Expected Return Harian', 
+            title_x=0.5,
+            xaxis_categoryorder='total descending'  # <--- TAMBAHKAN BARIS INI
+        )
 
 
 st.plotly_chart(fig_elim, use_container_width=True)
@@ -455,8 +455,8 @@ st.plotly_chart(fig_elim, use_container_width=True)
     best_k_index = df_k_search['Sharpe Ratio'].idxmax(); best_k_result = df_k_search.loc[best_k_index]
     K_optimum = int(best_k_result['K'])
     
-    st.dataframe(df_k_search.style.highlight_max(subset=['Sharpe Ratio'], color='lightgreen').format({'Return': '{:.4%}', 'Risiko': '{:.4%}', 'Sharpe Ratio': '{:.5f}'}))
-    st.success(f"✅ **K Optimum ditemukan: {K_optimum}** dengan Sharpe Ratio tertinggi sebesar **{best_k_result['Sharpe Ratio']:.5f}**.")
+    st.dataframe(df_k_search.style.highlight_max(subset=['Sharpe Ratio'], color='lightgreen').format({'Return': '{:.4%}', 'Risiko': '{:.4%}', 'Sharpe Ratio': '{:.4%}'}))
+    st.success(f"✅ **K Optimum ditemukan: {K_optimum}** dengan Sharpe Ratio tertinggi sebesar **{best_k_result['Sharpe Ratio']:.4%}**.")
     
     st.markdown("---")
     st.subheader(f"4. Tahap Optimasi: Membuat Efficient Frontier (K={K_optimum})")
@@ -482,7 +482,7 @@ st.plotly_chart(fig_elim, use_container_width=True)
     optimal_portfolio = df_frontier.loc[df_frontier['sharpe'].idxmax()]
 
     fig_frontier = px.scatter(df_frontier, x='risk', y='return', color='sharpe', color_continuous_scale='Viridis', labels={'risk': 'Risiko Harian (Std Dev)', 'return': 'Return Harian', 'sharpe': 'Sharpe Ratio'}, hover_data={'risk': ':.4%', 'return': ':.4%', 'sharpe': ':.5f', 'lambda': ':.2f'})
-    fig_frontier.add_trace(go.Scatter(x=[optimal_portfolio['risk']], y=[optimal_portfolio['return']], mode='markers', marker=dict(color='red', size=18, symbol='star', line=dict(width=1, color='black')), name=f'Optimal (λ: {optimal_portfolio["lambda"]:.2f}, Sharpe: {optimal_portfolio["sharpe"]:.5f})'))
+    fig_frontier.add_trace(go.Scatter(x=[optimal_portfolio['risk']], y=[optimal_portfolio['return']], mode='markers', marker=dict(color='red', size=18, symbol='star', line=dict(width=1, color='black')), name=f'Optimal (λ: {optimal_portfolio["lambda"]:.2f}, Sharpe: {optimal_portfolio["sharpe"]:.4%})'))
     fig_frontier.update_layout(height=600, template='plotly_white', title={'text': f'Efficient Frontier Interaktif (K = {K_optimum})', 'x': 0.5}, coloraxis_colorbar=dict(title='Sharpe Ratio'))
     st.plotly_chart(fig_frontier, use_container_width=True)
 
@@ -562,6 +562,7 @@ elif menu == "Panduan Dashboard":
 elif menu == "Optimasi Portofolio":
 
     page_optimasi()
+
 
 
 
