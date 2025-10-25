@@ -414,18 +414,18 @@ def run_optimization_process(start_date, end_date, tickers, jumlah_investasi, rf
             st.plotly_chart(plot_harga_interaktif(saham_vol_tinggi, data, "Tertinggi"), use_container_width=True)
             st.plotly_chart(plot_harga_interaktif(saham_vol_rendah, data, "Terendah"), use_container_width=True)
         
-        # --- REVISI 4: Menambahkan Correlation Plot ---
-        st.write("---")
-        st.write("**Matriks Korelasi Antar Saham yang Lolos Eliminasi**")
-        st.write("Matriks ini menunjukkan hubungan pergerakan harga antar saham. Nilai mendekati 1 berarti pergerakan searah, mendekati -1 berarti berlawanan arah, dan mendekati 0 berarti tidak ada hubungan linear.")
-        corr_matrix = filtered_returns.corr()
-        fig_corr = px.imshow(corr_matrix, 
-                             text_auto=True, 
-                             aspect="auto", 
-                             color_continuous_scale='RdBu_r', 
-                             title='Matriks Korelasi Return Saham')
-        fig_corr.update_layout(height=600, title_x=0.5)
-        st.plotly_chart(fig_corr, use_container_width=True)
+            # --- REVISI 4: Menambahkan Correlation Plot ---
+            st.write("---")
+            st.write("**Matriks Korelasi Antar Saham yang Lolos Eliminasi**")
+            st.write("Matriks ini menunjukkan hubungan pergerakan harga antar saham. Nilai mendekati 1 berarti pergerakan searah, mendekati -1 berarti berlawanan arah, dan mendekati 0 berarti tidak ada hubungan linear.")
+            corr_matrix = filtered_returns.corr()
+            fig_corr = px.imshow(corr_matrix, 
+                                 text_auto=True, 
+                                 aspect="auto", 
+                                 color_continuous_scale='RdBu_r', 
+                                 title='Matriks Korelasi Return Saham')
+            fig_corr.update_layout(height=600, title_x=0.5)
+            st.plotly_chart(fig_corr, use_container_width=True)
 
     st.markdown("---")
     st.subheader("3. Tahap Optimasi: Pencarian K Optimum (λ = 0.90)")
@@ -564,6 +564,7 @@ elif menu == "Panduan Dashboard":
 elif menu == "Optimasi Portofolio":
 
     page_optimasi()
+
 
 
 
