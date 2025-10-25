@@ -353,7 +353,7 @@ def run_optimization_process(start_date, end_date, tickers, jumlah_investasi, rf
         st.write(f"Dari **{len(tickers)}** emiten, **{len(filtered_stocks_tickers)}** lolos seleksi.")
         st.dataframe(results_df.style.apply(
             lambda row: ['background-color: #d4edda' if row.Keterangan == 'Lolos' else 'background-color: #f8d7da'] * len(row), axis=1
-        ).format({'Expected Return Harian': '{:.4%}', 'Risiko Harian': '{:.4%}'}))
+        ).format({'Expected Return Harian': '{:.3%}', 'Risiko Harian': '{:.3%}'}))
 
         results_df['Color'] = results_df['Keterangan'].apply(lambda x: '#4CAF50' if x == 'Lolos' else '#F44336')
         fig_elim = px.bar(results_df, x='Emiten', y='Expected Return Harian',
@@ -361,10 +361,10 @@ def run_optimization_process(start_date, end_date, tickers, jumlah_investasi, rf
                              color_discrete_map={'Lolos': '#4CAF50', 'Tereliminasi': '#F44336'},
                              title='Hasil Eliminasi Emiten vs Risk-Free Rate', 
                              labels={'Expected Return Harian': 'Return Harian'},
-                             hover_data={'Emiten': True, 'Expected Return Harian': ':.4%', 'Risiko Harian': ':.4%', 'Keterangan': True})
+                             hover_data={'Emiten': True, 'Expected Return Harian': ':.3%', 'Risiko Harian': ':.3%', 'Keterangan': True})
         
         fig_elim.add_hline(y=rf_daily, line_dash="dash", line_color="dodgerblue",
-                             annotation_text=f'RFR Harian ({rf_daily:.4%})', annotation_position="bottom right")
+                             annotation_text=f'RFR Harian ({rf_daily:.3%})', annotation_position="bottom right")
 
         fig_elim.update_layout(
             height=500, 
@@ -382,19 +382,23 @@ def run_optimization_process(start_date, end_date, tickers, jumlah_investasi, rf
             return
 
     st.subheader("2. Analisis Awal Saham yang Lolos")
-    with st.spinner("Menghitung statistika dan volatilitas... 📊"):
-        statdes_return_full = filtered_returns.describe().T
-        statdes_return = statdes_return_full[['mean', 'std', '50%', 'min', 'max']].rename(columns={'50%': 'median'})
-        excel_sheets['Statistika Deskriptif'] = statdes_return.copy()
-        
-        with st.expander("Lihat Statistika Deskriptif Return Harian"):
-            st.dataframe(statdes_return.style.format('{:.4f}'))
+    with st.spinner("Menghitung statistika (GM) dan volatilitas... 📊"):
+            statdes_return_full = filtered_returns.describe().T
+            kolom_pilihan_lain = ['std', 'min', 'max']
+            statdes_return_partial = statdes_return_full[kolom_pilihan_lain]
+            n_returns = len(filtered_returns)
+            geom_mean_series = ((1 + filtered_returns).prod())**(1/n_returns) - 1
+            geom_mean_series.name = 'geom_mean' 
+            statdes_return = pd.concat([geom_mean_series, statdes_return_partial], axis=1)
+            excel_sheets['Statistika Deskriptif'] = statdes_return.copy()
+            with st.expander("Lihat Statistika Deskriptif (Geometric Mean)"):
+                st.dataframe(statdes_return.style.format('{:.4%f}'))
             
         saham_vol_tinggi = statdes_return['std'].idxmax()
         saham_vol_rendah = statdes_return['std'].idxmin()
 
-        st.write(f"Saham Volatilitas Tertinggi: **{saham_vol_tinggi}** (Std Dev: {statdes_return['std'].max():.4%})")
-        st.write(f"Saham Volatilitas Terendah: **{saham_vol_rendah}** (Std Dev: {statdes_return['std'].min():.4%})")
+        st.write(f"Saham Volatilitas Tertinggi: **{saham_vol_tinggi}** (Std Dev: {statdes_return['std'].max():.3%})")
+        st.write(f"Saham Volatilitas Terendah: **{saham_vol_rendah}** (Std Dev: {statdes_return['std'].min():.3%})")
 
         def plot_harga_interaktif(ticker, data_harga, tipe_volatilitas):
             harga_saham = data_harga[ticker].reset_index(); harga_saham.columns = ['Tanggal', 'Harga']
@@ -453,8 +457,8 @@ def run_optimization_process(start_date, end_date, tickers, jumlah_investasi, rf
     best_k_index = df_k_search['Sharpe Ratio'].idxmax(); best_k_result = df_k_search.loc[best_k_index]
     K_optimum = int(best_k_result['K'])
     
-    st.dataframe(df_k_search.style.highlight_max(subset=['Sharpe Ratio'], color='lightgreen').format({'Return': '{:.4%}', 'Risiko': '{:.4%}', 'Sharpe Ratio': '{:.4%}'}))
-    st.success(f"✅ **K Optimum ditemukan: {K_optimum}** dengan Sharpe Ratio tertinggi sebesar **{best_k_result['Sharpe Ratio']:.4%}**.")
+    st.dataframe(df_k_search.style.highlight_max(subset=['Sharpe Ratio'], color='lightgreen').format({'Return': '{:.3%}', 'Risiko': '{:.3%}', 'Sharpe Ratio': '{:.3%}'}))
+    st.success(f"✅ **K Optimum ditemukan: {K_optimum}** dengan Sharpe Ratio tertinggi sebesar **{best_k_result['Sharpe Ratio']:.3%}**.")
     
     st.markdown("---")
     st.subheader(f"4. Tahap Optimasi: Membuat Efficient Frontier (K={K_optimum})")
@@ -479,8 +483,8 @@ def run_optimization_process(start_date, end_date, tickers, jumlah_investasi, rf
     excel_sheets['Data Frontier'] = df_frontier_excel
     optimal_portfolio = df_frontier.loc[df_frontier['sharpe'].idxmax()]
 
-    fig_frontier = px.scatter(df_frontier, x='risk', y='return', color='sharpe', color_continuous_scale='Viridis', labels={'risk': 'Risiko Harian (Std Dev)', 'return': 'Return Harian', 'sharpe': 'Sharpe Ratio'}, hover_data={'risk': ':.4%', 'return': ':.4%', 'sharpe': ':.5f', 'lambda': ':.2f'})
-    fig_frontier.add_trace(go.Scatter(x=[optimal_portfolio['risk']], y=[optimal_portfolio['return']], mode='markers', marker=dict(color='red', size=18, symbol='star', line=dict(width=1, color='black')), name=f'Optimal (λ: {optimal_portfolio["lambda"]:.2f}, Sharpe: {optimal_portfolio["sharpe"]:.4%})'))
+    fig_frontier = px.scatter(df_frontier, x='risk', y='return', color='sharpe', color_continuous_scale='Viridis', labels={'risk': 'Risiko Harian (Std Dev)', 'return': 'Return Harian', 'sharpe': 'Sharpe Ratio'}, hover_data={'risk': ':.3%', 'return': ':.3%', 'sharpe': ':.3%', 'lambda': ':.2f'})
+    fig_frontier.add_trace(go.Scatter(x=[optimal_portfolio['risk']], y=[optimal_portfolio['return']], mode='markers', marker=dict(color='red', size=18, symbol='star', line=dict(width=1, color='black')), name=f'Optimal (λ: {optimal_portfolio["lambda"]:.2f}, Sharpe: {optimal_portfolio["sharpe"]:.3%})'))
     fig_frontier.update_layout(height=600, template='plotly_white', title={'text': f'Efficient Frontier Interaktif (K = {K_optimum})', 'x': 0.5}, coloraxis_colorbar=dict(title='Sharpe Ratio'))
     st.plotly_chart(fig_frontier, use_container_width=True)
 
@@ -503,8 +507,8 @@ def run_optimization_process(start_date, end_date, tickers, jumlah_investasi, rf
         
         st.markdown(f"""
         Dengan modal **Rp {jumlah_investasi:,.0f}**, portofolio ini memiliki:
-        - **Potensi Keuntungan Harian:** Rata-rata **`{optimal_portfolio['return']:.4%}`** atau sekitar **`Rp {daily_return_rp:,.0f}`**.
-        - **Potensi Risiko Harian:** Fluktuasi nilai harian sebesar **`{optimal_portfolio['risk']:.4%}`** atau sekitar **`Rp {daily_risk_rp:,.0f}`**.
+        - **Potensi Keuntungan Harian:** Rata-rata **`{optimal_portfolio['return']:.3%}`** atau sekitar **`Rp {daily_return_rp:,.0f}`**.
+        - **Potensi Risiko Harian:** Fluktuasi nilai harian sebesar **`{optimal_portfolio['risk']:.3%}`** atau sekitar **`±Rp {daily_risk_rp:,.0f}`**.
         
         *Ini adalah estimasi berdasarkan data historis dan bukan jaminan kinerja di masa depan.*
         """)
@@ -560,6 +564,7 @@ elif menu == "Panduan Dashboard":
 elif menu == "Optimasi Portofolio":
 
     page_optimasi()
+
 
 
 
