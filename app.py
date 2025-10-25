@@ -357,14 +357,14 @@ def run_optimization_process(start_date, end_date, tickers, jumlah_investasi, rf
 
         results_df['Color'] = results_df['Keterangan'].apply(lambda x: '#4CAF50' if x == 'Lolos' else '#F44336')
         fig_elim = px.bar(results_df, x='Emiten', y='Expected Return Harian',
-                             color='Keterangan',
-                             color_discrete_map={'Lolos': '#4CAF50', 'Tereliminasi': '#F44336'},
-                             title='Hasil Eliminasi Emiten vs Risk-Free Rate', 
-                             labels={'Expected Return Harian': 'Return Harian'},
-                             hover_data={'Emiten': True, 'Expected Return Harian': ':.3%', 'Risiko Harian': ':.3%', 'Keterangan': True})
+                            color='Keterangan',
+                            color_discrete_map={'Lolos': '#4CAF50', 'Tereliminasi': '#F44336'},
+                            title='Hasil Eliminasi Emiten vs Risk-Free Rate', 
+                            labels={'Expected Return Harian': 'Return Harian'},
+                            hover_data={'Emiten': True, 'Expected Return Harian': ':.3%', 'Risiko Harian': ':.3%', 'Keterangan': True})
         
         fig_elim.add_hline(y=rf_daily, line_dash="dash", line_color="dodgerblue",
-                             annotation_text=f'RFR Harian ({rf_daily:.3%})', annotation_position="bottom right")
+                            annotation_text=f'RFR Harian ({rf_daily:.3%})', annotation_position="bottom right")
 
         fig_elim.update_layout(
             height=500, 
@@ -392,8 +392,11 @@ def run_optimization_process(start_date, end_date, tickers, jumlah_investasi, rf
             statdes_return = pd.concat([geom_mean_series, statdes_return_partial], axis=1)
             excel_sheets['Statistika Deskriptif'] = statdes_return.copy()
             with st.expander("Lihat Statistika Deskriptif (Geometric Mean)"):
-                st.dataframe(statdes_return.style.format('{:.4%f}'))
-            
+                
+                # --- INI ADALAH BARIS YANG DIPERBAIKI ---
+                st.dataframe(statdes_return.style.format('{:.4%}'))
+                # ----------------------------------------
+                
             saham_vol_tinggi = statdes_return['std'].idxmax()
             saham_vol_rendah = statdes_return['std'].idxmin()
     
@@ -413,17 +416,17 @@ def run_optimization_process(start_date, end_date, tickers, jumlah_investasi, rf
     
             st.plotly_chart(plot_harga_interaktif(saham_vol_tinggi, data, "Tertinggi"), use_container_width=True)
             st.plotly_chart(plot_harga_interaktif(saham_vol_rendah, data, "Terendah"), use_container_width=True)
-        
+            
             # --- REVISI 4: Menambahkan Correlation Plot ---
             st.write("---")
             st.write("**Matriks Korelasi Antar Saham yang Lolos Eliminasi**")
             st.write("Matriks ini menunjukkan hubungan pergerakan harga antar saham. Nilai mendekati 1 berarti pergerakan searah, mendekati -1 berarti berlawanan arah, dan mendekati 0 berarti tidak ada hubungan linear.")
             corr_matrix = filtered_returns.corr()
             fig_corr = px.imshow(corr_matrix, 
-                                 text_auto=True, 
-                                 aspect="auto", 
-                                 color_continuous_scale='RdBu_r', 
-                                 title='Matriks Korelasi Return Saham')
+                                text_auto=True, 
+                                aspect="auto", 
+                                color_continuous_scale='RdBu_r', 
+                                title='Matriks Korelasi Return Saham')
             fig_corr.update_layout(height=600, title_x=0.5)
             st.plotly_chart(fig_corr, use_container_width=True)
 
@@ -535,10 +538,10 @@ def run_optimization_process(start_date, end_date, tickers, jumlah_investasi, rf
     st.write("**Visualisasi Alokasi Bobot Interaktif**")
     alokasi_df_reset = alokasi_df.reset_index()
     fig_bar_alokasi = px.bar(alokasi_df_reset.sort_values('Bobot', ascending=False), 
-                             x='Emiten', y='Bobot',
-                             title=f'Alokasi Bobot Portofolio Optimal (K={K_optimum})',
-                             labels={'Bobot': 'Bobot Alokasi', 'Emiten': 'Emiten Saham'},
-                             text='Bobot')
+                            x='Emiten', y='Bobot',
+                            title=f'Alokasi Bobot Portofolio Optimal (K={K_optimum})',
+                            labels={'Bobot': 'Bobot Alokasi', 'Emiten': 'Emiten Saham'},
+                            text='Bobot')
     fig_bar_alokasi.update_traces(texttemplate='%{text:.2%}', textposition='outside')
     fig_bar_alokasi.update_layout(yaxis_tickformat='.0%', title_x=0.5, yaxis_title='Bobot Alokasi')
     st.plotly_chart(fig_bar_alokasi, use_container_width=True)
@@ -564,14 +567,3 @@ elif menu == "Panduan Dashboard":
 elif menu == "Optimasi Portofolio":
 
     page_optimasi()
-
-
-
-
-
-
-
-
-
-
-
