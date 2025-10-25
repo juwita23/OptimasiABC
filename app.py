@@ -394,25 +394,25 @@ def run_optimization_process(start_date, end_date, tickers, jumlah_investasi, rf
             with st.expander("Lihat Statistika Deskriptif (Geometric Mean)"):
                 st.dataframe(statdes_return.style.format('{:.4%f}'))
             
-        saham_vol_tinggi = statdes_return['std'].idxmax()
-        saham_vol_rendah = statdes_return['std'].idxmin()
-
-        st.write(f"Saham Volatilitas Tertinggi: **{saham_vol_tinggi}** (Std Dev: {statdes_return['std'].max():.3%})")
-        st.write(f"Saham Volatilitas Terendah: **{saham_vol_rendah}** (Std Dev: {statdes_return['std'].min():.3%})")
-
-        def plot_harga_interaktif(ticker, data_harga, tipe_volatilitas):
-            harga_saham = data_harga[ticker].reset_index(); harga_saham.columns = ['Tanggal', 'Harga']
-            idx_terendah = harga_saham['Harga'].idxmin(); info_terendah = harga_saham.loc[idx_terendah]
-            idx_tertinggi = harga_saham['Harga'].idxmax(); info_tertinggi = harga_saham.loc[idx_tertinggi]
-            fig = px.line(harga_saham, x='Tanggal', y='Harga', title=f'Pergerakan Harga Saham {ticker} (Volatilitas {tipe_volatilitas})')
-            fig.add_trace(go.Scatter(x=[info_terendah['Tanggal']], y=[info_terendah['Harga']], mode='markers', marker=dict(color='red', size=12), name=f"Terendah: {info_terendah['Harga']:,.0f}"))
-            fig.add_trace(go.Scatter(x=[info_tertinggi['Tanggal']], y=[info_tertinggi['Harga']], mode='markers', marker=dict(color='green', size=12), name=f"Tertinggi: {info_tertinggi['Harga']:,.0f}"))
-            fig.update_layout(template='plotly_white', title_x=0.5, legend_title_text='Keterangan', yaxis_title="Harga Penutupan (IDR)")
-            fig.update_traces(hovertemplate='<b>%{x|%d %b %Y}</b><br>Harga: Rp%{y:,.0f}<extra></extra>')
-            return fig
-
-        st.plotly_chart(plot_harga_interaktif(saham_vol_tinggi, data, "Tertinggi"), use_container_width=True)
-        st.plotly_chart(plot_harga_interaktif(saham_vol_rendah, data, "Terendah"), use_container_width=True)
+            saham_vol_tinggi = statdes_return['std'].idxmax()
+            saham_vol_rendah = statdes_return['std'].idxmin()
+    
+            st.write(f"Saham Volatilitas Tertinggi: **{saham_vol_tinggi}** (Std Dev: {statdes_return['std'].max():.3%})")
+            st.write(f"Saham Volatilitas Terendah: **{saham_vol_rendah}** (Std Dev: {statdes_return['std'].min():.3%})")
+    
+            def plot_harga_interaktif(ticker, data_harga, tipe_volatilitas):
+                harga_saham = data_harga[ticker].reset_index(); harga_saham.columns = ['Tanggal', 'Harga']
+                idx_terendah = harga_saham['Harga'].idxmin(); info_terendah = harga_saham.loc[idx_terendah]
+                idx_tertinggi = harga_saham['Harga'].idxmax(); info_tertinggi = harga_saham.loc[idx_tertinggi]
+                fig = px.line(harga_saham, x='Tanggal', y='Harga', title=f'Pergerakan Harga Saham {ticker} (Volatilitas {tipe_volatilitas})')
+                fig.add_trace(go.Scatter(x=[info_terendah['Tanggal']], y=[info_terendah['Harga']], mode='markers', marker=dict(color='red', size=12), name=f"Terendah: {info_terendah['Harga']:,.0f}"))
+                fig.add_trace(go.Scatter(x=[info_tertinggi['Tanggal']], y=[info_tertinggi['Harga']], mode='markers', marker=dict(color='green', size=12), name=f"Tertinggi: {info_tertinggi['Harga']:,.0f}"))
+                fig.update_layout(template='plotly_white', title_x=0.5, legend_title_text='Keterangan', yaxis_title="Harga Penutupan (IDR)")
+                fig.update_traces(hovertemplate='<b>%{x|%d %b %Y}</b><br>Harga: Rp%{y:,.0f}<extra></extra>')
+                return fig
+    
+            st.plotly_chart(plot_harga_interaktif(saham_vol_tinggi, data, "Tertinggi"), use_container_width=True)
+            st.plotly_chart(plot_harga_interaktif(saham_vol_rendah, data, "Terendah"), use_container_width=True)
         
         # --- REVISI 4: Menambahkan Correlation Plot ---
         st.write("---")
@@ -564,6 +564,7 @@ elif menu == "Panduan Dashboard":
 elif menu == "Optimasi Portofolio":
 
     page_optimasi()
+
 
 
 
