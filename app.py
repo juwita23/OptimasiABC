@@ -350,7 +350,7 @@ def run_optimization_process(start_date, end_date, tickers, jumlah_investasi, rf
         filtered_returns = returns[filtered_stocks_tickers]
         filtered_geom_mean = geom_mean_returns[filtered_stocks_tickers]
         
-        st.write(f"Dari **{len(tickers)}** emiten, **{len(filtered_stocks_tickers)}** lolos seleksi.")
+        st.write(f"Dari **{len(tickers)}** emiten, **{len(filtered_stocks_tickers)}** lolos seleksi dan **{len(tickers) - len(filtered_stocks_tickers)}** tereliminasi.")
         st.dataframe(results_df.style.apply(
             lambda row: ['background-color: #d4edda' if row.Keterangan == 'Lolos' else 'background-color: #f8d7da'] * len(row), axis=1
         ).format({'Expected Return Harian': '{:.3%}', 'Risiko Harian': '{:.3%}'}))
@@ -567,3 +567,4 @@ elif menu == "Panduan Dashboard":
 elif menu == "Optimasi Portofolio":
 
     page_optimasi()
+
