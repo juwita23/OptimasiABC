@@ -392,10 +392,7 @@ def run_optimization_process(start_date, end_date, tickers, jumlah_investasi, rf
             statdes_return = pd.concat([geom_mean_series, statdes_return_partial], axis=1)
             excel_sheets['Statistika Deskriptif'] = statdes_return.copy()
             with st.expander("Lihat Statistika Deskriptif (Geometric Mean)"):
-                
-                # --- INI ADALAH BARIS YANG DIPERBAIKI ---
-                st.dataframe(statdes_return.style.format('{:.4%}'))
-                # ----------------------------------------
+                st.dataframe(statdes_return.style.format('{:.3%}'))
                 
             saham_vol_tinggi = statdes_return['std'].idxmax()
             saham_vol_rendah = statdes_return['std'].idxmin()
@@ -567,4 +564,5 @@ elif menu == "Panduan Dashboard":
 elif menu == "Optimasi Portofolio":
 
     page_optimasi()
+
 
