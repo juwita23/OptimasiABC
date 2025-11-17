@@ -486,7 +486,7 @@ def run_optimization_process(start_date, end_date, tickers, jumlah_investasi, rf
 
     fig_frontier = px.scatter(df_frontier, x='risk', y='return', color='sharpe', color_continuous_scale='Viridis', labels={'risk': 'Risiko Harian (Std Dev)', 'return': 'Return Harian', 'sharpe': 'Sharpe Ratio'}, hover_data={'risk': ':.3%', 'return': ':.3%', 'sharpe': ':.3%', 'lambda': ':.2f'})
     fig_frontier.add_trace(go.Scatter(x=[optimal_portfolio['risk']], y=[optimal_portfolio['return']], mode='markers', marker=dict(color='red', size=18, symbol='star', line=dict(width=1, color='black')), name=f'Optimal (λ: {optimal_portfolio["lambda"]:.2f}, Sharpe: {optimal_portfolio["sharpe"]:.3%})'))
-    fig_frontier.update_layout(height=600, template='plotly_white', title={'text': f'Efficient Frontier Interaktif (K = {K_optimum})', 'x': 0.5}, coloraxis_colorbar=dict(title='Sharpe Ratio'))
+    fig_frontier.update_layout(height=600, template='plotly_white', title={'text': f'Efficient Frontier Interaktif (K = {K_optimum})', 'x': 0.5}, coloraxis_colorbar=dict(title='Sharpe Ratio'), yaxis_title='Return Harian (%)', yaxis_tickformat='.%')
     st.plotly_chart(fig_frontier, use_container_width=True)
 
     st.markdown("---")
@@ -565,6 +565,7 @@ elif menu == "Panduan Dashboard":
 elif menu == "Optimasi Portofolio":
 
     page_optimasi()
+
 
 
 
