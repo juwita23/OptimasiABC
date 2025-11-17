@@ -370,6 +370,7 @@ def run_optimization_process(start_date, end_date, tickers, jumlah_investasi, rf
             height=500, 
             xaxis_tickangle=-90, 
             yaxis_title='Expected Return Harian', 
+            yaxis_tickformat='.%',
             title_x=0.5,
             xaxis_categoryorder='total descending'
         )
@@ -564,5 +565,6 @@ elif menu == "Panduan Dashboard":
 elif menu == "Optimasi Portofolio":
 
     page_optimasi()
+
 
 
