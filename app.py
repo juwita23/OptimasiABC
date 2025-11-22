@@ -498,7 +498,7 @@ def run_optimization_process(start_date, end_date, tickers, jumlah_investasi, rf
         st.write("**Summary Kinerja Portofolio**")
         summary_data = {'Metrik': ['Expected Daily Return', 'Daily Risk (Std Dev)', 'Sharpe Ratio'], 'Nilai': [optimal_portfolio['return'], optimal_portfolio['risk'], optimal_portfolio['sharpe']]}
         summary_df = pd.DataFrame(summary_data).set_index('Metrik')
-        st.dataframe(summary_df.style.format({'Nilai': '{:.6f}'}))
+        st.dataframe(summary_df.style.format({'Nilai': '{:.3%}'}))
         excel_sheets['Ringkasan Optimal'] = summary_df.copy()
 
     with col2:
@@ -565,6 +565,7 @@ elif menu == "Panduan Dashboard":
 elif menu == "Optimasi Portofolio":
 
     page_optimasi()
+
 
 
 
