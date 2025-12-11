@@ -39,7 +39,6 @@ SECTOR_MAP = {
 
 # ==============================================================================
 # --- 2. FUNGSI-FUNGSI INTI (ALGORITMA & KALKULASI) ---
-# (Fungsi-fungsi ini tidak diubah)
 # ==============================================================================
 
 def calculate_objective(weights, z_vector, mean_returns, cov_matrix, lambda_val):
@@ -265,9 +264,9 @@ def page_panduan():
     - Aplikasi akan menampilkan serangkaian hasil secara bertahap:
         - **Eliminasi Saham:** Tabel dan grafik saham yang lolos seleksi awal.
         - **Analisis Volatilitas:** Boxplot distribusi return per sektor untuk saham yang lolos.
-        - **Pencarian K Optimum:** Tabel dan grafik tren Sharpe Ratio untuk menentukan jumlah saham (K) terbaik.
-        - **Efficient Frontier:** Grafik interaktif yang memetakan semua kemungkinan portofolio. Titik bintang merah adalah portofolio terbaik.
-        - **Hasil Akhir:** Ringkasan kinerja, alokasi bobot, dan simulasi investasi untuk portofolio optimal Anda.
+        - **Pencarian K Optimum:** Tabel dan grafik interaktif tren Sharpe Ratio.
+        - **Efficient Frontier:** Grafik interaktif yang memetakan semua kemungkinan portofolio.
+        - **Hasil Akhir:** Ringkasan kinerja, alokasi bobot, dan simulasi investasi.
 
     **5. Unduh Laporan**
     - Di bagian paling bawah, Anda akan menemukan tombol **'📥 Unduh Hasil ke Excel'** untuk menyimpan semua tabel data ke dalam satu file Excel.
@@ -326,6 +325,7 @@ def run_optimization_process(start_date, end_date, tickers, jumlah_investasi, rf
     
     excel_sheets = {}
 
+    # --- 1. DOWNLOAD DATA ---
     with st.spinner("Mengunduh data harga saham... 📥"):
         try:
             data = yf.download(tickers, start=start_date, end=end_date, progress=False)["Close"]
@@ -342,6 +342,7 @@ def run_optimization_process(start_date, end_date, tickers, jumlah_investasi, rf
             
     st.success("Data harga saham berhasil diunduh.")
 
+    # --- 2. ELIMINASI SAHAM ---
     st.subheader("1. Proses Eliminasi Saham Berdasarkan Risk-Free Rate")
     with st.spinner("Menghitung return dan melakukan eliminasi... 🔬"):
         geom_mean_returns = ((1 + returns).prod())**(1/len(returns)) - 1
@@ -392,26 +393,30 @@ def run_optimization_process(start_date, end_date, tickers, jumlah_investasi, rf
             st.error(f"⚠️ Jumlah saham yang lolos seleksi ({num_assets}) kurang dari 2. Proses optimasi tidak dapat dilanjutkan.")
             return
 
+    # --- 3. ANALISIS BOXPLOT GRID ---
     st.subheader("2. Analisis Distribusi Return per Sektor (Boxplot)")
     
-    # --- REVISI: MENGGUNAKAN BOXPLOT SESUAI CODINGAN USER ---
     with st.spinner("Membuat Visualisasi Boxplot per Sektor... 📊"):
         
-        sector_risks = {} # Untuk menyimpan rata-rata risiko per sektor
+        sector_risks = {} 
+        valid_sectors_count = 0 # Counter untuk mengatur grid
         
+        # Buat layout 2 kolom untuk grid
+        cols = st.columns(2) 
+
         # Iterasi setiap sektor di SECTOR_MAP
         for sector_name, sector_tickers in SECTOR_MAP.items():
-            # Filter ticker yang lolos seleksi (ada di filtered_returns)
+            # Filter ticker yang lolos seleksi
             available_tickers = [t for t in sector_tickers if t in filtered_returns.columns]
 
             if available_tickers:
                 sector_data = filtered_returns[available_tickers]
                 
-                # Hitung rata-rata risiko (std dev) untuk sektor ini untuk kesimpulan nanti
+                # Hitung rata-rata risiko
                 sector_avg_risk = sector_data.std().mean()
                 sector_risks[sector_name] = sector_avg_risk
 
-                # --- BAGIAN 1: PERSIAPAN DATA STATISTIK UNTUK EXCEL (Sesuai kode user) ---
+                # Persiapan Data Statistik
                 stats_list = []
                 for ticker_code in available_tickers:
                     series = sector_data[ticker_code]
@@ -446,73 +451,79 @@ def run_optimization_process(start_date, end_date, tickers, jumlah_investasi, rf
                 safe_sheet_name = sector_name[:31]
                 excel_sheets[f"Stat {safe_sheet_name}"] = df_stats
 
-                # --- BAGIAN 2: VISUALISASI BOXPLOT (Matplotlib -> Streamlit) ---
-                fig, ax = plt.subplots(figsize=(12, 8)) # Subplots lebih aman untuk Streamlit
+                # VISUALISASI BOXPLOT GRID
+                col_idx = valid_sectors_count % 2
+                with cols[col_idx]:
+                    
+                    # Ukuran diperkecil (7,5)
+                    fig, ax = plt.subplots(figsize=(7, 5)) 
+                    
+                    sns.boxplot(data=sector_data, palette="Set3", showmeans=True, ax=ax,
+                                meanprops={"marker":"^", "markerfacecolor":"green", "markeredgecolor":"green", "markersize": 8})
+
+                    # Loop Label Angka
+                    for i, ticker_code in enumerate(available_tickers):
+                        series = sector_data[ticker_code]
+                        median_val = series.median()
+                        mean_val = series.mean()
+                        q1 = series.quantile(0.25)
+                        q3 = series.quantile(0.75)
+                        iqr = q3 - q1
+                        lower_bound = q1 - (1.5 * iqr)
+                        upper_bound = q3 + (1.5 * iqr)
+                        outliers = series[(series < lower_bound) | (series > upper_bound)]
+
+                        # Font size diperkecil
+                        ax.text(i + 0.1, mean_val, f'Mean: {mean_val:.3%}',
+                                horizontalalignment='left', fontsize=8, color='green', weight='bold')
+
+                        ax.text(i + 0.1, median_val, f'Median: {median_val:.3%}',
+                                horizontalalignment='left', fontsize=8, color='black', weight='bold', verticalalignment='top')
+
+                        # Label Outlier
+                        if len(outliers) > 0:
+                            if len(outliers) <= 5: 
+                                for val in outliers:
+                                    ax.text(i, val, f'{val:.3%}', horizontalalignment='center',
+                                            verticalalignment='bottom', fontsize=7, color='red')
+                            else:
+                                max_out = outliers.max()
+                                min_out = outliers.min()
+                                ax.text(i, max_out, f'{max_out:.3%}', horizontalalignment='center',
+                                        verticalalignment='bottom', fontsize=7, color='red')
+                                ax.text(i, min_out, f'{min_out:.3%}', horizontalalignment='center',
+                                        verticalalignment='top', fontsize=7, color='red')
+
+                    ax.set_title(f'Sektor {sector_name}', fontsize=12, weight='bold') 
+                    ax.set_xlabel('', fontsize=9) 
+                    ax.set_ylabel('Daily Return', fontsize=9)
+                    ax.tick_params(axis='both', which='major', labelsize=8)
+                    ax.grid(True, axis='y', linestyle='--', alpha=0.5)
+                    ax.axhline(0, color='gray', linestyle='--', linewidth=0.8)
+                    
+                    st.pyplot(fig) # Tampilkan di kolom yang aktif
+                    plt.close(fig) 
                 
-                sns.boxplot(data=sector_data, palette="Set3", showmeans=True, ax=ax,
-                            meanprops={"marker":"^", "markerfacecolor":"green", "markeredgecolor":"green", "markersize": 10})
+                valid_sectors_count += 1 
 
-                for i, ticker_code in enumerate(available_tickers):
-                    series = sector_data[ticker_code]
-                    median_val = series.median()
-                    mean_val = series.mean()
-                    q1 = series.quantile(0.25)
-                    q3 = series.quantile(0.75)
-                    iqr = q3 - q1
-                    lower_bound = q1 - (1.5 * iqr)
-                    upper_bound = q3 + (1.5 * iqr)
-                    outliers = series[(series < lower_bound) | (series > upper_bound)]
-
-                    # LABEL MEAN (Hijau)
-                    ax.text(i + 0.1, mean_val, f'Mean: {mean_val:.3%}',
-                            horizontalalignment='left', fontsize=10, color='green', weight='bold')
-
-                    # LABEL MEDIAN (Hitam)
-                    ax.text(i + 0.1, median_val, f'Median: {median_val:.3%}',
-                            horizontalalignment='left', fontsize=10, color='black', weight='bold', verticalalignment='top')
-
-                    # Label Outlier
-                    if len(outliers) > 0:
-                        if len(outliers) <= 10:
-                            for val in outliers:
-                                ax.text(i, val, f'{val:.3%}', horizontalalignment='center',
-                                        verticalalignment='bottom', fontsize=9, color='red')
-                        else:
-                            max_out = outliers.max()
-                            min_out = outliers.min()
-                            ax.text(i, max_out, f'{max_out:.3%}', horizontalalignment='center',
-                                    verticalalignment='bottom', fontsize=9, color='red')
-                            ax.text(i, min_out, f'{min_out:.3%}', horizontalalignment='center',
-                                    verticalalignment='top', fontsize=9, color='red')
-
-                ax.set_title(f'Distribusi Return Sektor {sector_name}', fontsize=16, weight='bold')
-                ax.set_xlabel('Emiten', fontsize=12)
-                ax.set_ylabel('Daily Return', fontsize=12)
-                ax.grid(True, axis='y', linestyle='--', alpha=0.5)
-                ax.axhline(0, color='gray', linestyle='--', linewidth=0.8)
-                
-                st.pyplot(fig) # Tampilkan di Streamlit
-                plt.close(fig) # Tutup figure untuk menghemat memori
-
-        # --- KESIMPULAN RISIKO ---
+        # Kesimpulan Risiko
         if sector_risks:
             riskiest_sector = max(sector_risks, key=sector_risks.get)
             st.info(f"💡 **Kesimpulan Risiko:** Berdasarkan rata-rata standar deviasi emiten yang lolos seleksi, Sektor **{riskiest_sector}** cenderung memiliki risiko volatilitas paling tinggi dibandingkan sektor lainnya.")
 
-        # --- REVISI 4: HEATMAP (Ukuran Diperkecil) ---
+        # Heatmap Kecil
         st.write("---")
         st.write("**Matriks Korelasi Antar Saham yang Lolos Eliminasi**")
-        st.write("Matriks ini menunjukkan hubungan pergerakan harga antar saham.")
         corr_matrix = filtered_returns.corr()
         fig_corr = px.imshow(corr_matrix, 
                                 text_auto=True, 
                                 aspect="auto", 
                                 color_continuous_scale='RdBu_r', 
                                 title='Matriks Korelasi Return Saham')
-        # Tinggi dikurangi jadi 450 agar tidak terlalu besar
         fig_corr.update_layout(height=450, width=600, title_x=0.5) 
         st.plotly_chart(fig_corr, use_container_width=True)
 
+    # --- 4. OPTIMASI (K Search) ---
     st.markdown("---")
     st.subheader("3. Tahap Optimasi: Pencarian K Optimum (λ = 0.90)")
     
@@ -545,73 +556,67 @@ def run_optimization_process(start_date, end_date, tickers, jumlah_investasi, rf
     st.dataframe(df_k_search.style.highlight_max(subset=['Sharpe Ratio'], color='lightgreen').format({'Return': '{:.3%}', 'Risiko': '{:.3%}', 'Sharpe Ratio': '{:.3%}'}))
     st.success(f"✅ **K Optimum ditemukan: {K_optimum}** dengan Sharpe Ratio tertinggi sebesar **{best_k_result['Sharpe Ratio']:.3%}**.")
     
-    # --- REVISI TAMBAHAN: VISUALISASI PERGERAKAN SHARPE RATIO (Sesuai Codingan User) ---
+    # --- VISUALISASI PERGERAKAN SHARPE RATIO (INTERAKTIF PLOTLY) ---
     st.write("---")
-    st.write("**Visualisasi Pergerakan Sharpe Ratio per K (dalam Persen)**")
+    st.write("**Visualisasi Pergerakan Sharpe Ratio per K (Interaktif)**")
     
-    # Konversi hasil pencarian K ke DataFrame (df_k_results = df_k_search sudah ada)
-    df_k_results = df_k_search.copy()
+    # Konversi data ke format persen untuk display
+    df_chart = df_k_search.copy()
+    df_chart['Sharpe Percent'] = df_chart['Sharpe Ratio'] * 100
+    best_sharpe_percent = best_k_result['Sharpe Ratio'] * 100
     
-    # Ubah nama kolom agar sesuai dengan snippet user jika perlu, atau pakai nama yang sudah ada
-    # Di kode asli kolomnya 'Sharpe Ratio', di snippet user 'Sharpe_Ratio'. Kita sesuaikan aksesnya.
-    sharpe_col_name = 'Sharpe Ratio' 
+    # Membuat Grafik Plotly
+    fig_sharpe = go.Figure()
+
+    # 1. Garis Utama
+    fig_sharpe.add_trace(go.Scatter(
+        x=df_chart['K'], 
+        y=df_chart['Sharpe Percent'],
+        mode='lines+markers',
+        name='Sharpe Ratio',
+        line=dict(color='#34495e', width=3),
+        marker=dict(size=8, color='#3498db'),
+        hovertemplate='<b>Jumlah Saham (K): %{x}</b><br>Sharpe Ratio: %{y:.3f}%<extra></extra>'
+    ))
+
+    # 2. Highlight Titik Optimum (Bintang Merah)
+    fig_sharpe.add_trace(go.Scatter(
+        x=[K_optimum], 
+        y=[best_sharpe_percent],
+        mode='markers',
+        name='K Optimum',
+        marker=dict(color='#e74c3c', size=18, symbol='star', line=dict(width=2, color='white')),
+        hovertemplate='<b>K OPTIMUM: %{x}</b><br>Max Sharpe: %{y:.3f}%<extra></extra>'
+    ))
+
+    # 3. Layout Styling
+    fig_sharpe.update_layout(
+        title={
+            'text': 'Pergerakan Sharpe Ratio Berdasarkan Jumlah Saham (K)',
+            'y':0.95,
+            'x':0.5,
+            'xanchor': 'center',
+            'yanchor': 'top'
+        },
+        xaxis_title='Jumlah Saham (K)',
+        yaxis_title='Sharpe Ratio (%)',
+        template='plotly_white',
+        hovermode='x unified', # Mode hover interaktif yang nyaman
+        xaxis=dict(
+            tickmode='linear',
+            dtick=1 # Memastikan sumbu X menampilkan angka bulat (1, 2, 3...)
+        ),
+        legend=dict(
+            yanchor="bottom",
+            y=0.01,
+            xanchor="right",
+            x=0.99
+        )
+    )
     
-    best_sharpe_for_k = df_k_results[sharpe_col_name].max()
+    st.plotly_chart(fig_sharpe, use_container_width=True)
 
-    # 1. Setup Canvas (Menggunakan plt.subplots untuk Streamlit)
-    fig_sharpe, ax_sharpe = plt.subplots(figsize=(12, 7))
-
-    # Mengalikan Sharpe Ratio dengan 100 untuk mendapatkan persentase
-    sharpe_percent = df_k_results[sharpe_col_name] * 100
-    best_sharpe_percent = best_sharpe_for_k * 100
-
-    # 2. Plot Garis Utama (Biru Elegan)
-    ax_sharpe.plot(df_k_results['K'], sharpe_percent,
-             marker='o', markersize=6, linestyle='-',
-             color='#34495e', linewidth=2, alpha=0.9, label='Sharpe Ratio Trend')
-
-    # 3. Efek Bayangan di Bawah Garis
-    min_sharpe_val = sharpe_percent.min()
-    ax_sharpe.fill_between(df_k_results['K'], sharpe_percent,
-                     min_sharpe_val - (min_sharpe_val * 0.005),
-                     color='#3498db', alpha=0.15)
-
-    # 4. Menandai Titik Optimum (Merah dengan Border Putih)
-    ax_sharpe.scatter(K_optimum, best_sharpe_percent,
-                color='#e74c3c', s=200, zorder=5,
-                edgecolor='white', linewidth=2.5,
-                label=f'K Optimum ({K_optimum})')
-
-    # 5. Anotasi Label (POSISI DI BAWAH) - Menggunakan nilai persentase
-    ax_sharpe.annotate(f'Max Sharpe: {best_sharpe_percent:.3f}%',
-                 xy=(K_optimum, best_sharpe_percent),
-                 xytext=(0, -35),
-                 textcoords='offset points',
-                 ha='center', va='top',
-                 fontsize=11, fontweight='bold', color='#c0392b',
-                 bbox=dict(boxstyle="round,pad=0.3", fc="white", ec="#e74c3c", alpha=0.9, linewidth=1))
-
-    # 6. Formatting Judul & Sumbu
-    ax_sharpe.set_title('Pergerakan Sharpe Ratio Berdasarkan Jumlah Saham (K)', fontsize=16, weight='bold', pad=15)
-    ax_sharpe.set_xlabel('Jumlah Saham (K)', fontsize=12, labelpad=10)
-    ax_sharpe.set_ylabel('Sharpe Ratio (%)', fontsize=12, labelpad=10)
-
-    # Pastikan sumbu X menampilkan semua angka integer
-    ax_sharpe.set_xticks(df_k_results['K'])
-
-    # Grid yang lebih halus
-    ax_sharpe.grid(True, axis='both', linestyle='--', linewidth=0.7, alpha=0.6)
-
-    # Menambah margin bawah
-    ax_sharpe.margins(y=0.15)
-
-    ax_sharpe.legend(loc='best', frameon=True, shadow=True)
-    fig_sharpe.tight_layout()
-    
-    st.pyplot(fig_sharpe) # Tampilkan di Streamlit
-    plt.close(fig_sharpe)
-
-    
+    # --- 5. EFFICIENT FRONTIER ---
     st.markdown("---")
     st.subheader(f"4. Tahap Optimasi: Membuat Efficient Frontier (K={K_optimum})")
     
@@ -640,6 +645,7 @@ def run_optimization_process(start_date, end_date, tickers, jumlah_investasi, rf
     fig_frontier.update_layout(height=600, template='plotly_white', title={'text': f'Efficient Frontier Interaktif (K = {K_optimum})', 'x': 0.5}, coloraxis_colorbar=dict(title='Sharpe Ratio'), yaxis_title='Return Harian (%)', yaxis_tickformat='.2%')
     st.plotly_chart(fig_frontier, use_container_width=True)
 
+    # --- 6. HASIL AKHIR ---
     st.markdown("---")
     st.subheader("5. Hasil Akhir: Portofolio Optimal")
     st.info(f"Parameter Optimal: **K = {K_optimum}** saham, **Lambda (λ) = {optimal_portfolio['lambda']:.2f}**")
