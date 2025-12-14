@@ -6,6 +6,7 @@ import plotly.express as px
 import plotly.graph_objects as go
 import matplotlib.pyplot as plt
 import seaborn as sns
+import matplotlib.ticker as mtick 
 from datetime import datetime
 from io import BytesIO
 
@@ -345,6 +346,7 @@ def run_optimization_process(start_date, end_date, tickers, jumlah_investasi, rf
     # --- 2. ELIMINASI SAHAM ---
     st.subheader("1. Proses Eliminasi Saham Berdasarkan Risk-Free Rate")
     with st.spinner("Menghitung return dan melakukan eliminasi... 🔬"):
+        # HITUNG GEOMETRIC MEAN DI SINI (Digunakan lagi nanti di Boxplot)
         geom_mean_returns = ((1 + returns).prod())**(1/len(returns)) - 1
         
         risks = returns.std()
@@ -393,13 +395,12 @@ def run_optimization_process(start_date, end_date, tickers, jumlah_investasi, rf
             st.error(f"⚠️ Jumlah saham yang lolos seleksi ({num_assets}) kurang dari 2. Proses optimasi tidak dapat dilanjutkan.")
             return
 
-    # --- 3. ANALISIS BOXPLOT GRID (REVISI: MENGGUNAKAN GEOM MEAN) ---
-    st.subheader("2. Analisis Distribusi Geometric Mean per Sektor (Boxplot)")
-    st.info("Boxplot di bawah ini menampilkan distribusi nilai **Geometric Mean Return** dari emiten-emiten yang lolos seleksi dalam setiap sektor.")
+    # --- 3. ANALISIS BOXPLOT GRID (REVISI: Menggunakan Geometric Mean) ---
+    st.subheader("2. Analisis Distribusi Return per Sektor (Boxplot)")
     
     with st.spinner("Membuat Visualisasi Boxplot per Sektor... 📊"):
         
-        sector_stats_summary = [] 
+        sector_risks = {} 
         valid_sectors_count = 0 # Counter untuk mengatur grid
         
         # Buat layout 2 kolom untuk grid
@@ -408,76 +409,91 @@ def run_optimization_process(start_date, end_date, tickers, jumlah_investasi, rf
         # Iterasi setiap sektor di SECTOR_MAP
         for sector_name, sector_tickers in SECTOR_MAP.items():
             # Filter ticker yang lolos seleksi
-            available_tickers = [t for t in sector_tickers if t in filtered_geom_mean.index]
+            available_tickers = [t for t in sector_tickers if t in filtered_returns.columns]
 
             if available_tickers:
-                # REVISI: Mengambil data Geometric Mean, bukan Daily Returns
-                sector_values = filtered_geom_mean[available_tickers]
+                sector_data = filtered_returns[available_tickers]
                 
-                # Menghitung Statistik untuk SEKTOR tersebut (Distribusi Geom Mean Saham)
-                median_val = sector_values.median()
-                mean_val = sector_values.mean()
-                q1 = sector_values.quantile(0.25)
-                q3 = sector_values.quantile(0.75)
-                iqr = q3 - q1
-                lower_bound = q1 - (1.5 * iqr)
-                upper_bound = q3 + (1.5 * iqr)
-                
-                # Mencari emiten yang outlier dalam sektornya (berdasarkan Geom Mean)
-                outliers = sector_values[(sector_values < lower_bound) | (sector_values > upper_bound)]
-                
-                sector_stats_summary.append({
-                    'Sektor': sector_name,
-                    'Jumlah Emiten': len(available_tickers),
-                    'Rata-rata Geom Mean': mean_val,
-                    'Median Geom Mean': median_val,
-                    'Min Geom Mean': sector_values.min(),
-                    'Max Geom Mean': sector_values.max(),
-                    'Emiten Outlier': ", ".join(outliers.index.tolist()) if not outliers.empty else "-"
-                })
+                # Hitung rata-rata risiko untuk kesimpulan nanti
+                sector_avg_risk = sector_data.std().mean()
+                sector_risks[sector_name] = sector_avg_risk
 
-                # VISUALISASI BOXPLOT GRID
+                # --- BAGIAN 1: PERSIAPAN DATA STATISTIK UNTUK EXCEL (REVISI) ---
+                stats_list = []
+                for ticker_code in available_tickers:
+                    series = sector_data[ticker_code]
+                    
+                    # --- AMBIL NILAI GEOM MEAN YANG SUDAH DIHITUNG DI AWAL ---
+                    geom_mean_val = geom_mean_returns[ticker_code]
+                    
+                    median_val = series.median()
+                    q1 = series.quantile(0.25)
+                    q3 = series.quantile(0.75)
+                    iqr = q3 - q1
+
+                    stats_list.append({
+                        'Emiten': ticker_code,
+                        'Geometric Mean (Rata-rata Harian)': geom_mean_val, # Nilai diambil dari atas
+                        'Median (Tengah)': median_val,
+                        'Q1 (25%)': q1,
+                        'Q3 (75%)': q3,
+                        'IQR': iqr
+                        # Outlier stats dihapus agar sesuai dengan logika snippet
+                    })
+
+                # Simpan ke Excel Sheets Dictionary
+                df_stats = pd.DataFrame(stats_list)
+                safe_sheet_name = sector_name[:31]
+                excel_sheets[f"Stat {safe_sheet_name}"] = df_stats
+
+                # --- BAGIAN 2: VISUALISASI BOXPLOT GRID (REVISI) ---
                 col_idx = valid_sectors_count % 2
                 with cols[col_idx]:
                     
-                    # Ukuran diperkecil (7,5)
+                    # Ukuran diperkecil (7, 5) untuk streamlit
                     fig, ax = plt.subplots(figsize=(7, 5)) 
                     
-                    # Boxplot untuk distribusi Geom Mean di sektor ini
-                    # Menggunakan list/array dari values agar terbentuk 1 box
-                    sns.boxplot(y=sector_values.values, ax=ax, color='lightblue', showmeans=True,
-                                meanprops={"marker":"^", "markerfacecolor":"red", "markeredgecolor":"red", "markersize": 10})
-                    
-                    # Stripplot (Scatter overlay) untuk melihat posisi masing-masing emiten
-                    sns.stripplot(y=sector_values.values, ax=ax, color='black', size=6, jitter=True, alpha=0.7)
+                    sns.boxplot(data=sector_data, palette="Set3", showmeans=True, ax=ax,
+                                meanprops={"marker":"^", "markerfacecolor":"green", "markeredgecolor":"green", "markersize": 8})
 
-                    # Label Point untuk Nama Emiten
-                    # Agar tidak terlalu berantakan, kita label semua tapi dengan font kecil
-                    y_range = sector_values.max() - sector_values.min()
-                    for i, ticker in enumerate(available_tickers):
-                        val = sector_values[ticker]
-                        # Sedikit offset text agar tidak menimpa titik
-                        ax.text(0.02, val, f" {ticker}", ha='left', va='center', fontsize=8, color='darkblue')
+                    # Loop Label Angka
+                    for i, ticker_code in enumerate(available_tickers):
+                        series = sector_data[ticker_code]
+                        
+                        # --- AMBIL NILAI GEOM MEAN LAGI UNTUK LABEL ---
+                        geom_mean_val = geom_mean_returns[ticker_code]
+                        median_val = series.median()
 
-                    ax.set_title(f'Distribusi Geom Mean - {sector_name}', fontsize=12, weight='bold') 
-                    ax.set_ylabel('Geometric Mean Return', fontsize=9)
-                    ax.set_xticks([]) # Hilangkan label sumbu X karena hanya 1 kategori
-                    ax.tick_params(axis='y', which='major', labelsize=8)
+                        # Font size diperkecil agar muat
+                        # Label Geom Mean (Hijau)
+                        ax.text(i + 0.1, geom_mean_val, f'Geom Mean: {geom_mean_val:.3%}',
+                                horizontalalignment='left', fontsize=8, color='green', weight='bold')
+
+                        # Label Median (Hitam)
+                        ax.text(i + 0.1, median_val, f'Median: {median_val:.3%}',
+                                horizontalalignment='left', fontsize=8, color='black', weight='bold', verticalalignment='top')
+                        
+                        # Tidak ada label outlier (sesuai perintah revisi)
+
+                    ax.set_title(f'Sektor {sector_name}', fontsize=12, weight='bold') 
+                    ax.set_xlabel('', fontsize=9) 
+                    ax.set_ylabel('Daily Return', fontsize=9)
+                    ax.tick_params(axis='both', which='major', labelsize=8)
                     ax.grid(True, axis='y', linestyle='--', alpha=0.5)
+                    ax.axhline(0, color='gray', linestyle='--', linewidth=0.8)
                     
-                    # Menampilkan statistik rata-rata di pojok
-                    ax.text(0.95, 0.95, f'Mean: {mean_val:.4%}', transform=ax.transAxes, 
-                            ha='right', va='top', fontsize=9, color='red', weight='bold', 
-                            bbox=dict(boxstyle="round,pad=0.3", fc="white", ec="red", alpha=0.8))
-
+                    # Format Y-axis ke Persen menggunakan Matplotlib Ticker
+                    ax.yaxis.set_major_formatter(mtick.PercentFormatter(xmax=1.0))
+                    
                     st.pyplot(fig) # Tampilkan di kolom yang aktif
                     plt.close(fig) 
                 
                 valid_sectors_count += 1 
 
-        # Simpan Statistik Sektor ke Excel
-        df_sector_stats = pd.DataFrame(sector_stats_summary)
-        excel_sheets["Statistik Sektor"] = df_sector_stats
+        # Kesimpulan Risiko
+        if sector_risks:
+            riskiest_sector = max(sector_risks, key=sector_risks.get)
+            st.info(f"💡 **Kesimpulan Risiko:** Berdasarkan rata-rata standar deviasi emiten yang lolos seleksi, Sektor **{riskiest_sector}** cenderung memiliki risiko volatilitas paling tinggi dibandingkan sektor lainnya.")
 
         # Heatmap Kecil
         st.write("---")
