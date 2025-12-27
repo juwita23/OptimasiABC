@@ -228,19 +228,33 @@ def calculate_portfolio_performance(weights, mean_returns, cov_matrix, rf_daily)
 # --- 3. FUNGSI UNTUK TAMPILAN (PAGES) ---
 # ==============================================================================
 
-def page_selamat_datang():
-    st.title("Selamat Datang di Aplikasi Optimasi Portofolio")
-    st.markdown("---")
-    st.subheader("Maksimalkan Potensi Investasi Anda dengan *Artificial Bee Colony* (ABC)")
-    st.write(
-        """
-        Aplikasi ini dirancang untuk membantu Anda membangun portofolio saham yang optimal 
-        berdasarkan model *Cardinality Constrained Mean-Variance* (CCMV). Dengan memanfaatkan 
-        kecerdasan algoritma ABC, kami akan menganalisis dan menemukan kombinasi saham terbaik 
-        untuk mencapai keseimbangan antara **return** yang tinggi dan **risiko** yang terkendali.
-        """
-    )
-    st.info("👈 **Mulai dengan memilih menu di sidebar kiri.** Anda bisa membaca panduan atau langsung menuju ke halaman optimasi.", icon="ℹ️")
+def page_selamat_datang(pilihan_bahasa):
+    if pilihan_bahasa == "English":
+        st.title("Welcome to the Portfolio Optimization Application")
+        st.markdown("---")
+        st.subheader("Maximize Your Investment Potential with *Artificial Bee Colony* (ABC)")
+        st.write(
+            """
+            This application is designed to help you build an optimal stock portfolio 
+            based on the *Cardinality Constrained Mean-Variance* (CCMV) model. By leveraging the 
+            intelligence of the ABC algorithm, we will analyze and find the best combination of stocks 
+            to achieve a balance between high **returns** and controlled **risk**.
+            """
+        )
+        st.info("👈 **Start by selecting a menu from the left sidebar.** You can read the guide or go directly to the optimization page.", icon="ℹ️")
+    else:
+        st.title("Selamat Datang di Aplikasi Optimasi Portofolio")
+        st.markdown("---")
+        st.subheader("Maksimalkan Potensi Investasi Anda dengan *Artificial Bee Colony* (ABC)")
+        st.write(
+            """
+            Aplikasi ini dirancang untuk membantu Anda membangun portofolio saham yang optimal 
+            berdasarkan model *Cardinality Constrained Mean-Variance* (CCMV). Dengan memanfaatkan 
+            kecerdasan algoritma ABC, kami akan menganalisis dan menemukan kombinasi saham terbaik 
+            untuk mencapai keseimbangan antara **return** yang tinggi dan **risiko** yang terkendali.
+            """
+        )
+        st.info("👈 **Mulai dengan memilih menu di sidebar kiri.** Anda bisa membaca panduan atau langsung menuju ke halaman optimasi.", icon="ℹ️")
 
 def page_panduan():
     st.title("Panduan Penggunaan Dashboard")
@@ -271,6 +285,10 @@ def page_panduan():
 
     **5. Unduh Laporan**
     - Di bagian paling bawah, Anda akan menemukan tombol **'📥 Unduh Hasil ke Excel'** untuk menyimpan semua tabel data ke dalam satu file Excel.
+
+    **6. Penanganan Jika Terjadi Error**
+    - Mengingat komputasi yang berat dan ketergantungan pada koneksi data, terkadang aplikasi mungkin mengalami kendala teknis (error). 
+    - Jika hal ini terjadi, Anda cukup melakukan **refresh (muat ulang)** halaman browser Anda, atur kembali parameter yang diinginkan, lalu klik kembali tombol **'🚀 Mulai Optimasi'**.
     """)
     st.success("Selamat mencoba dan semoga investasi Anda menguntungkan!")
 
@@ -438,7 +456,6 @@ def run_optimization_process(start_date, end_date, tickers, jumlah_investasi, rf
                         'Q1 (25%)': q1,
                         'Q3 (75%)': q3,
                         'IQR': iqr
-                        # Outlier stats dihapus agar sesuai dengan logika snippet
                     })
 
                 # Simpan ke Excel Sheets Dictionary
@@ -473,7 +490,6 @@ def run_optimization_process(start_date, end_date, tickers, jumlah_investasi, rf
                         ax.text(i + 0.1, median_val, f'Median: {median_val:.3%}',
                                 horizontalalignment='left', fontsize=8, color='black', weight='bold', verticalalignment='top')
                         
-                        # Tidak ada label outlier (sesuai perintah revisi)
 
                     ax.set_title(f'Sektor {sector_name}', fontsize=12, weight='bold') 
                     ax.set_xlabel('', fontsize=9) 
@@ -585,10 +601,10 @@ def run_optimization_process(start_date, end_date, tickers, jumlah_investasi, rf
         xaxis_title='Jumlah Saham (K)',
         yaxis_title='Sharpe Ratio (%)',
         template='plotly_white',
-        hovermode='x unified', # Mode hover interaktif yang nyaman
+        hovermode='x unified', 
         xaxis=dict(
             tickmode='linear',
-            dtick=1 # Memastikan sumbu X menampilkan angka bulat (1, 2, 3...)
+            dtick=1 
         ),
         legend=dict(
             yanchor="bottom",
@@ -697,10 +713,14 @@ def run_optimization_process(start_date, end_date, tickers, jumlah_investasi, rf
 # --- 5. NAVIGASI UTAMA APLIKASI ---
 # ==============================================================================
 st.sidebar.title("Navigasi")
+
+# --- TAMBAHAN: Pilihan Bahasa Khusus Halaman Utama ---
+bahasa = st.sidebar.selectbox("Pilih Bahasa (Halaman Utama):", ["Bahasa Indonesia", "English"])
+
 menu = st.sidebar.radio("Pilih Halaman:", ("Halaman Utama", "Panduan Dashboard", "Optimasi Portofolio"))
 
 if menu == "Halaman Utama":
-    page_selamat_datang()
+    page_selamat_datang(bahasa)
 elif menu == "Panduan Dashboard":
     page_panduan()
 elif menu == "Optimasi Portofolio":
