@@ -228,8 +228,8 @@ def calculate_portfolio_performance(weights, mean_returns, cov_matrix, rf_daily)
 # --- 3. FUNGSI UNTUK TAMPILAN (PAGES) ---
 # ==============================================================================
 
-def page_selamat_datang(pilihan_bahasa):
-    if pilihan_bahasa == "English":
+def page_selamat_datang(bahasa):
+    if bahasa == "English":
         st.title("Welcome to the Portfolio Optimization Application")
         st.markdown("---")
         st.subheader("Maximize Your Investment Potential with *Artificial Bee Colony* (ABC)")
@@ -286,9 +286,9 @@ def page_panduan():
     **5. Unduh Laporan**
     - Di bagian paling bawah, Anda akan menemukan tombol **'📥 Unduh Hasil ke Excel'** untuk menyimpan semua tabel data ke dalam satu file Excel.
 
-    **6. Penanganan Jika Terjadi Error**
-    - Mengingat komputasi yang berat dan ketergantungan pada koneksi data, terkadang aplikasi mungkin mengalami kendala teknis (error). 
-    - Jika hal ini terjadi, Anda cukup melakukan **refresh (muat ulang)** halaman browser Anda, atur kembali parameter yang diinginkan, lalu klik kembali tombol **'🚀 Mulai Optimasi'**.
+    **6. Troubleshooting (Jika Terjadi Error)**
+    - Jika aplikasi berhenti (hang) atau muncul pesan error merah, cukup lakukan **Refresh (Muat Ulang)** pada browser Anda.
+    - Atur ulang parameter di sidebar, lalu klik kembali tombol **'🚀 Mulai Optimasi'**.
     """)
     st.success("Selamat mencoba dan semoga investasi Anda menguntungkan!")
 
@@ -667,8 +667,6 @@ def run_optimization_process(start_date, end_date, tickers, jumlah_investasi, rf
         Dengan modal **Rp {jumlah_investasi:,.0f}**, portofolio ini memiliki:
         - **Potensi Keuntungan Harian:** Rata-rata **`{optimal_portfolio['return']:.3%}`** atau sekitar **`Rp {daily_return_rp:,.0f}`**.
         - **Potensi Risiko Harian:** Fluktuasi nilai harian sebesar **`{optimal_portfolio['risk']:.3%}`** atau sekitar **`±Rp {daily_risk_rp:,.0f}`**.
-        
-        *Ini adalah estimasi berdasarkan data historis dan bukan jaminan kinerja di masa depan.*
         """)
 
     st.markdown("---")
@@ -685,9 +683,7 @@ def run_optimization_process(start_date, end_date, tickers, jumlah_investasi, rf
     with col4:
         st.write("**📝 Interpretasi Alokasi**")
         st.markdown(f"""
-        Tabel di samping menunjukkan bagaimana dana investasi Anda sebesar **Rp {jumlah_investasi:,.0f}** didistribusikan ke dalam **{K_optimum}** saham terpilih.
-        
-        Bobot terbesar dialokasikan pada saham dengan kombinasi return dan risiko terbaik menurut analisis algoritma.
+        Dana investasi Anda sebesar **Rp {jumlah_investasi:,.0f}** didistribusikan ke dalam **{K_optimum}** saham terpilih.
         """)
 
     st.write("**Visualisasi Alokasi Bobot Interaktif**")
@@ -714,8 +710,8 @@ def run_optimization_process(start_date, end_date, tickers, jumlah_investasi, rf
 # ==============================================================================
 st.sidebar.title("Navigasi")
 
-# --- TAMBAHAN: Pilihan Bahasa Khusus Halaman Utama ---
-bahasa = st.sidebar.selectbox("Pilih Bahasa (Halaman Utama):", ["Bahasa Indonesia", "English"])
+# --- Fitur Bahasa (Hanya Untuk Halaman Utama) ---
+bahasa = st.sidebar.selectbox("Pilih Bahasa / Select Language:", ["Bahasa Indonesia", "English"])
 
 menu = st.sidebar.radio("Pilih Halaman:", ("Halaman Utama", "Panduan Dashboard", "Optimasi Portofolio"))
 
